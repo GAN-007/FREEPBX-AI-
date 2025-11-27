@@ -442,7 +442,7 @@ For new deployments:
 
 ### Links
 
-- **Repository**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent
+- **Repository**: https://github.com/GAN-007/FREEPBX-AI-
 - **Documentation**: [docs/README.md](docs/README.md)
 - **FreePBX Guide**: [docs/FreePBX-Integration-Guide.md](docs/FreePBX-Integration-Guide.md)
 - **Monitoring**: [monitoring/README.md](monitoring/README.md)
@@ -655,7 +655,7 @@ Version 4.1 introduces **unified tool calling architecture** enabling AI agents 
 
 ### Links
 
-- **Repository**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent
+- **Repository**: https://github.com/GAN-007/FREEPBX-AI-
 - **Tool Calling Guide**: [docs/TOOL_CALLING_GUIDE.md](docs/TOOL_CALLING_GUIDE.md)
 - **FreePBX Guide**: [docs/FreePBX-Integration-Guide.md](docs/FreePBX-Integration-Guide.md)
 - **CLI Tools Guide**: [docs/CLI_TOOLS_GUIDE.md](docs/CLI_TOOLS_GUIDE.md)
@@ -679,5 +679,5 @@ Version 4.1 introduces **unified tool calling architecture** enabling AI agents 
 - **v2.0.0** - Internal development version (never released)
 - **v1.0.0** - Initial concept (never released)
 
-[4.0.0]: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/tag/v4.0.0
-[Unreleased]: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/GAN-007/FREEPBX-AI-/releases/tag/v4.0.0
+[Unreleased]: https://github.com/GAN-007/FREEPBX-AI-/compare/v4.0.0...HEAD

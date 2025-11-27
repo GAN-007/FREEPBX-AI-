@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 		fmt.Printf("Asterisk AI Voice Agent CLI\n")
 		fmt.Printf("Version:    %s\n", version)
 		fmt.Printf("Built:      %s\n", buildTime)
-		fmt.Printf("Repository: https://github.com/hkjarral/Asterisk-AI-Voice-Agent\n")
+		fmt.Printf("Repository: https://github.com/GAN-007/FREEPBX-AI-\n")
 	},
 }
 

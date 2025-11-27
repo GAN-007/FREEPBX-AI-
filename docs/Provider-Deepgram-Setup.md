@@ -230,4 +230,4 @@ providers:
 
 **Deepgram Provider Setup - Complete** ✅
 
-For questions or issues, see the [GitHub repository](https://github.com/hkjarral/Asterisk-AI-Voice-Agent).
+For questions or issues, see the [GitHub repository](https://github.com/GAN-007/FREEPBX-AI-).

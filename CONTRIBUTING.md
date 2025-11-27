@@ -33,7 +33,7 @@ Recommended flow:
 - Quick start:
 
   ```bash
-  git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+  git clone https://github.com/GAN-007/FREEPBX-AI-.git
   cd Asterisk-AI-Voice-Agent
   ./install.sh   # guided setup; or follow README for manual steps
   ```

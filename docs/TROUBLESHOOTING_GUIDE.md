@@ -35,17 +35,17 @@ This will:
 
 ### Manual Installation
 
-Download the appropriate binary for your platform from [GitHub Releases](https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest):
+Download the appropriate binary for your platform from [GitHub Releases](https://github.com/GAN-007/FREEPBX-AI-/releases/latest):
 
 **Linux:**
 ```bash
 # Most servers (x86_64)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-linux-amd64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-linux-amd64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 
 # ARM64 (Raspberry Pi, AWS Graviton)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-linux-arm64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-linux-arm64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 ```
@@ -53,17 +53,17 @@ sudo mv agent /usr/local/bin/
 **macOS:**
 ```bash
 # Intel Macs
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-darwin-amd64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-darwin-amd64
 
 # Apple Silicon (M1/M2/M3)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-darwin-arm64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-darwin-arm64
 
 chmod +x agent
 sudo mv agent /usr/local/bin/
 ```
 
 **Windows:**
-Download `agent-windows-amd64.exe` from [releases](https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest) and add to your PATH.
+Download `agent-windows-amd64.exe` from [releases](https://github.com/GAN-007/FREEPBX-AI-/releases/latest) and add to your PATH.
 
 ### Verify Installation
 
@@ -76,7 +76,7 @@ You should see:
 Asterisk AI Voice Agent CLI
 Version:    v4.1.0
 Built:      2025-11-07T19:00:00Z
-Repository: https://github.com/hkjarral/Asterisk-AI-Voice-Agent
+Repository: https://github.com/GAN-007/FREEPBX-AI-
 ```
 
 ### Available Tools
@@ -1201,7 +1201,7 @@ docker logs --since 1h ai_engine > ai-engine.log 2>&1
 
 ### 3. Search GitHub Issues
 
-https://github.com/hkjarral/Asterisk-AI-Voice-Agent/issues
+https://github.com/GAN-007/FREEPBX-AI-/issues
 
 Search for:
 - Error messages
@@ -1244,7 +1244,7 @@ Network: Bridge mode
 
 ### 5. Community Support
 
-- **Discussions:** https://github.com/hkjarral/Asterisk-AI-Voice-Agent/discussions
+- **Discussions:** https://github.com/GAN-007/FREEPBX-AI-/discussions
 - **Discord:** (coming soon)
 
 ---

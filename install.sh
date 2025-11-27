@@ -1185,7 +1185,7 @@ offer_cli_installation() {
     # Download and install
     print_info "Installing agent CLI for $OS/$ARCH..."
     
-    local BINARY_URL="https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-${OS}-${ARCH}"
+    local BINARY_URL="https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-${OS}-${ARCH}"
     local TEMP_FILE="/tmp/agent-cli-$$"
     
     if curl -sfL "$BINARY_URL" -o "$TEMP_FILE"; then

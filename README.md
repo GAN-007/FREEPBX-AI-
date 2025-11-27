@@ -247,7 +247,7 @@ Get up and running in **5 minutes** with our new interactive wizard:
 
 ```bash
 # Clone repository
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 
 # Run installer (sets up Docker and offers CLI installation)
@@ -267,7 +267,7 @@ The wizard will:
 ### Option B: Manual Setup (Advanced Users)
 
 ```bash
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 ./install.sh
 ```
@@ -489,8 +489,8 @@ If you want to contribute features (providers, tools, pipelines) or run the proj
 Have questions or want to chat with other users? Join our community:
 
 * **[Discord Server](https://discord.gg/CAVACtaY)** - Community support and discussions
-* [GitHub Issues](https://github.com/hkjarral/Asterisk-AI-Voice-Agent/issues) - Bug reports and feature requests
-* [GitHub Discussions](https://github.com/hkjarral/Asterisk-AI-Voice-Agent/discussions) - General discussions
+* [GitHub Issues](https://github.com/GAN-007/FREEPBX-AI-/issues) - Bug reports and feature requests
+* [GitHub Discussions](https://github.com/GAN-007/FREEPBX-AI-/discussions) - General discussions
 
 ## 📝 License
 
@@ -498,4 +498,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 🙏 Show Your Support
 
-If you find this project useful, please give it a ⭐️ on [GitHub](https://github.com/hkjarral/Asterisk-AI-Voice-Agent)! It helps us gain visibility and encourages more people to contribute.
+If you find this project useful, please give it a ⭐️ on [GitHub](https://github.com/GAN-007/FREEPBX-AI-)! It helps us gain visibility and encourages more people to contribute.

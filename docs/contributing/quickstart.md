@@ -66,7 +66,7 @@ You can still follow this guide and use AVA conceptually even if your IDE doesnâ
 On your development machine:
 
 ```bash
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 ```
 

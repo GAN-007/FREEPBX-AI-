@@ -448,6 +448,6 @@ Stasis(asterisk-ai-voice-agent)
 
 ## Support
 
-- **Issues**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/issues
-- **Docs**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/tree/main/docs
+- **Issues**: https://github.com/GAN-007/FREEPBX-AI-/issues
+- **Docs**: https://github.com/GAN-007/FREEPBX-AI-/tree/main/docs
 - **Linear**: Task AAVA-75 (Google Cloud Integration - CLOSED with findings)

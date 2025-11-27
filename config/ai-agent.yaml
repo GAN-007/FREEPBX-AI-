@@ -180,6 +180,10 @@ providers:
     output_encoding: mulaw
     output_sample_rate_hz: 8000
     tts_model: aura-2-thalia-en
+  claude:
+    api_key: ${CLAUDE_API_KEY:-}
+    model: claude-3-5-sonnet-20240620
+    temperature: 0.6
   local:
     chunk_ms: ${LOCAL_WS_CHUNK_MS:=320}
     connect_timeout_sec: ${LOCAL_WS_CONNECT_TIMEOUT:=2.0}
@@ -218,6 +222,15 @@ pipelines:
           sample_rate: 8000
     stt: local_stt
     tts: local_tts
+  claude_hybrid:
+    stt: local_stt
+    llm: claude_llm
+    tts: local_tts
+    options:
+      llm:
+        model: claude-3-5-sonnet-20240620
+        temperature: 0.6
+        max_tokens: 256
 
 # Asterisk Configuration
 asterisk:

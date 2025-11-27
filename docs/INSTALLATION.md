@@ -11,7 +11,7 @@ Choose the path that best fits your experience level:
 **5-minute guided setup** with automatic validation:
 
 ```bash
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 
 # Run installer (sets up Docker, offers CLI installation)
@@ -37,7 +37,7 @@ The wizard will:
 **Traditional installer** with manual configuration:
 
 ```bash
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 ./install.sh
 ```
@@ -128,7 +128,7 @@ The installation is handled by an interactive script that will guide you through
 First, clone the project repository to a directory on your server.
 
 ```bash
-git clone https://github.com/hkjarral/Asterisk-AI-Voice-Agent.git
+git clone https://github.com/GAN-007/FREEPBX-AI-.git
 cd Asterisk-AI-Voice-Agent
 ```
 

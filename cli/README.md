@@ -34,17 +34,17 @@ This will:
 
 ### Manual Download
 
-Download pre-built binaries from [GitHub Releases](https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases):
+Download pre-built binaries from [GitHub Releases](https://github.com/GAN-007/FREEPBX-AI-/releases):
 
 **Linux:**
 ```bash
 # AMD64 (most Linux servers)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-linux-amd64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-linux-amd64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 
 # ARM64 (Raspberry Pi, AWS Graviton)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-linux-arm64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-linux-arm64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 ```
@@ -52,12 +52,12 @@ sudo mv agent /usr/local/bin/
 **macOS:**
 ```bash
 # Intel Macs
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-darwin-amd64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-darwin-amd64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 
 # Apple Silicon (M1/M2/M3)
-curl -L -o agent https://github.com/hkjarral/Asterisk-AI-Voice-Agent/releases/latest/download/agent-darwin-arm64
+curl -L -o agent https://github.com/GAN-007/FREEPBX-AI-/releases/latest/download/agent-darwin-arm64
 chmod +x agent
 sudo mv agent /usr/local/bin/
 ```
@@ -495,8 +495,8 @@ fi
 ## Support
 
 - **Documentation**: [docs/CLI_TOOLS_GUIDE.md](../docs/CLI_TOOLS_GUIDE.md)
-- **Issues**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/issues
-- **Discussions**: https://github.com/hkjarral/Asterisk-AI-Voice-Agent/discussions
+- **Issues**: https://github.com/GAN-007/FREEPBX-AI-/issues
+- **Discussions**: https://github.com/GAN-007/FREEPBX-AI-/discussions
 
 ## License
 

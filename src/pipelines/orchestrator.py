@@ -28,6 +28,7 @@ from .deepgram_flux import DeepgramFluxSTTAdapter
 from .google import GoogleLLMAdapter, GoogleSTTAdapter, GoogleTTSAdapter
 from .local import LocalLLMAdapter, LocalSTTAdapter, LocalTTSAdapter
 from .openai import OpenAISTTAdapter, OpenAILLMAdapter, OpenAITTSAdapter
+from .claude import ClaudeLLMAdapter
 
 logger = get_logger(__name__)
 
@@ -174,6 +175,7 @@ def _build_default_registry() -> Dict[str, ComponentFactory]:
         "openai",
         "openai_realtime",
         "google",
+        "claude",
     )
 
     for provider in default_providers:
@@ -208,6 +210,7 @@ class PipelineOrchestrator:
         self._deepgram_provider_config: Optional[DeepgramProviderConfig] = self._hydrate_deepgram_config()
         self._openai_provider_config: Optional[OpenAIProviderConfig] = self._hydrate_openai_config()
         self._google_provider_config: Optional[GoogleProviderConfig] = self._hydrate_google_config()
+        self._claude_provider_config: Optional[Dict[str, Any]] = self._hydrate_claude_config()
         self._register_builtin_factories()
 
         self._assignments: Dict[str, PipelineResolution] = {}
@@ -454,6 +457,16 @@ class PipelineOrchestrator:
         else:
             logger.debug("Google pipeline adapters not registered - credentials unavailable or invalid")
 
+        if self._claude_provider_config is not None:
+            llm_factory = self._make_claude_llm_factory(self._claude_provider_config)
+            self.register_factory("claude_llm", llm_factory)
+            logger.info(
+                "Claude pipeline adapter registered",
+                llm_factory="claude_llm",
+            )
+        else:
+            logger.debug("Claude pipeline adapter not registered - provider config unavailable")
+
     def _make_local_stt_factory(
         self,
         provider_config: LocalProviderConfig,
@@ -648,6 +661,22 @@ class PipelineOrchestrator:
 
         return factory
 
+    def _make_claude_llm_factory(
+        self,
+        provider_config: Dict[str, Any],
+    ) -> ComponentFactory:
+        config_payload = dict(provider_config)
+
+        def factory(component_key: str, options: Dict[str, Any]) -> Component:
+            return ClaudeLLMAdapter(
+                component_key,
+                self.config,
+                config_payload,
+                options,
+            )
+
+        return factory
+
     def _hydrate_google_config(self) -> Optional[GoogleProviderConfig]:
         providers = getattr(self.config, "providers", {}) or {}
         raw_config = providers.get("google")
@@ -711,6 +740,19 @@ class PipelineOrchestrator:
             return None
 
         return config
+
+    def _hydrate_claude_config(self) -> Optional[Dict[str, Any]]:
+        providers = getattr(self.config, "providers", {}) or {}
+        raw_config = providers.get("claude")
+        if not raw_config:
+            return None
+        if isinstance(raw_config, dict):
+            return raw_config
+        logger.warning(
+            "Unsupported Claude provider config type for pipelines",
+            config_type=type(raw_config).__name__,
+        )
+        return None
 
     def _resolve_factory(self, component_key: str) -> ComponentFactory:
         factory = self._registry.get(component_key)
