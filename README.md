@@ -12,6 +12,9 @@
 
 </div>
 
+**Project Source:** [github.com/GAN-007/FREEPBX-AI-](https://github.com/GAN-007/FREEPBX-AI-)  
+**Author:** [George Alfred Nyamema](https://github.com/GAN-007)
+
 The most powerful, flexible open-source AI voice agent for Asterisk/FreePBX. Featuring a **modular pipeline architecture** that lets you mix and match STT, LLM, and TTS providers, plus **4 production-ready golden baselines** validated for enterprise deployment.
 
 ## 🎉 What's New in v4.3.0

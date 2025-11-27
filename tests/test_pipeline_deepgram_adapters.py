@@ -80,6 +80,10 @@ class _FakeResponse:
 
     async def text(self):
         return self._body.decode("utf-8", errors="ignore")
+    
+    async def json(self):
+        import json as _json
+        return _json.loads(self._body.decode("utf-8"))
 
 
 class _FakeSession:
@@ -89,8 +93,10 @@ class _FakeSession:
         self.requests = []
         self.closed = False
 
-    def post(self, url, json=None, params=None, headers=None):
-        self.requests.append({"url": url, "json": json, "params": params, "headers": headers})
+    def post(self, url, json=None, params=None, headers=None, data=None, timeout=None):
+        self.requests.append(
+            {"url": url, "json": json, "params": params, "headers": headers, "data": data, "timeout": timeout}
+        )
         return _FakeResponse(self._body, status=self._status)
 
     async def close(self):
@@ -101,7 +107,22 @@ class _FakeSession:
 async def test_deepgram_stt_adapter_transcribes(monkeypatch):
     app_config = _build_app_config()
     provider_config = DeepgramProviderConfig(**app_config.providers["deepgram"])
-    adapter = DeepgramSTTAdapter("deepgram_stt", app_config, provider_config, {"language": "en-US"})
+    response_body = json.dumps(
+        {
+            "results": {
+                "channels": [
+                    {"alternatives": [{"transcript": "hello world", "confidence": 0.92}]}
+                ]
+            }
+        }
+    ).encode()
+    adapter = DeepgramSTTAdapter(
+        "deepgram_stt",
+        app_config,
+        provider_config,
+        {"language": "en-US"},
+        session_factory=lambda: _FakeSession(response_body),
+    )
 
     mock_ws = _MockWebSocket()
 

@@ -36,8 +36,9 @@ class TestResolveConfigPath:
         # Should end with the relative path
         assert result.endswith(rel_path)
         
-        # Should contain project directory name
-        assert "Asterisk-AI-Voice-Agent" in result
+        # Should contain project directory name (root derived from loaders._PROJ_DIR)
+        from src.config import loaders as loaders_mod
+        assert loaders_mod._PROJ_DIR.name in result
     
     def test_current_dir_relative_path(self):
         """Paths starting with ./ should be resolved."""

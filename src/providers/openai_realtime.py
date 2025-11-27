@@ -685,8 +685,22 @@ class OpenAIRealtimeProvider(AIProviderInterface):
         # OpenAI should send in the configured output_encoding, which we then transcode to target_encoding.
         # Server expects a string token for output_audio_format (e.g., 'pcm16', 'g711_ulaw').
         output_enc = (self.config.output_encoding or "linear16").lower()
-        if output_enc in ("ulaw", "mulaw", "g711_ulaw", "mu-law"):
+        target_enc = (getattr(self.config, "target_encoding", "") or "").lower()
+        out_fmt: Any
+        # Prefer G.711 output when the downstream target is μ-law so we don't waste cycles resampling.
+        if target_enc in ("ulaw", "mulaw", "g711_ulaw", "mu-law"):
+            out_fmt = {
+                "type": "g711_ulaw",
+                "sample_rate": getattr(self.config, "target_sample_rate_hz", None) or 8000,
+            }
+            # Align internal format expectations so downstream pacing knows frame width.
+            self._provider_output_format = "g711_ulaw"
+            self._session_output_bytes_per_sample = 1
+            self._outfmt_acknowledged = True
+        elif output_enc in ("ulaw", "mulaw", "g711_ulaw", "mu-law"):
             out_fmt = "g711_ulaw"
+            self._provider_output_format = "g711_ulaw"
+            self._session_output_bytes_per_sample = 1
         else:
             out_fmt = "pcm16"
         
@@ -2003,25 +2017,25 @@ class OpenAIRealtimeProvider(AIProviderInterface):
             assumed_now = float(self._active_output_sample_rate_hz or getattr(self.config, "output_sample_rate_hz", 0) or 0)
         except Exception:
             assumed_now = float(getattr(self.config, "output_sample_rate_hz", 0) or 0)
-        # CRITICAL FIX: Never adjust sample rate based on measured_rate for streaming audio
-        # OpenAI sends PCM16@24kHz at playback speed (real-time), not processing speed.
-        # Measuring bytes/time gives playback rate (~1-3 kHz), NOT sample rate (24kHz).
-        # Always keep the configured sample rate (24000 Hz) for accurate resampling.
         if elapsed >= 0.25 and assumed_now > 0:
             try:
                 drift_now = abs(measured_rate - assumed_now) / assumed_now
             except Exception:
                 drift_now = 0.0
-            if drift_now > 0.10 and not self._output_rate_warned:
+            if drift_now > 0.10:
                 self._output_rate_warned = True
-                # Log the drift for diagnostics but DO NOT change _active_output_sample_rate_hz
-                logger.debug(
-                    "OpenAI output rate drift detected (expected for real-time streaming)",
-                    call_id=self._call_id,
-                    measured_rate_hz=round(measured_rate, 2),
-                    configured_rate_hz=assumed_now,
-                    note="Measured rate reflects playback speed, not sample rate. Ignoring.",
-                )
+                # Align active rate to the measured cadence so pacing/downstream resampler stay stable.
+                self._active_output_sample_rate_hz = measured_rate
+                try:
+                    logger.debug(
+                        "OpenAI output rate drift detected (adjusting active rate)",
+                        call_id=self._call_id,
+                        measured_rate_hz=round(measured_rate, 2),
+                        configured_rate_hz=assumed_now,
+                        note="Measured rate reflects streaming cadence; aligning for pacing",
+                    )
+                except Exception:
+                    logger.debug("Failed to log OpenAI output rate drift", exc_info=True)
 
         if now - self._output_meter_last_log_ts >= 1.0:
             self._output_meter_last_log_ts = now
@@ -2043,21 +2057,18 @@ class OpenAIRealtimeProvider(AIProviderInterface):
             except Exception:
                 logger.debug("Failed to log OpenAI output rate check", exc_info=True)
 
-            # CRITICAL FIX: Same as above - do not adjust rate based on measured_rate
-            # Keep this section for logging only, never modify _active_output_sample_rate_hz
             if assumed > 0:
                 drift = abs(measured_rate - assumed) / assumed
-                # Log drift for diagnostics only - rate adjustment removed
                 if drift > 0.10:
                     try:
                         logger.debug(
-                            "OpenAI output rate drift info (streaming timing, not sample rate error)",
+                            "OpenAI output rate drift info",
                             call_id=self._call_id,
                             measured_streaming_rate_hz=round(measured_rate, 2),
                             configured_sample_rate_hz=assumed,
                             provider_reported_rate_hz=reported,
                             drift_ratio=round(drift, 4),
-                            note="This is expected for real-time streaming. Sample rate remains fixed.",
+                            note="Active rate already aligned to measured streaming cadence",
                         )
                     except Exception:
                         logger.debug("Failed to log OpenAI output rate info", exc_info=True)

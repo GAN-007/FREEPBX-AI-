@@ -110,6 +110,7 @@ class DeepgramSTTAdapter(STTComponent):
         app_config: AppConfig,
         provider_config: DeepgramProviderConfig,
         options: Optional[Dict[str, Any]] = None,
+        session_factory: Optional[Callable[[], aiohttp.ClientSession]] = None,
     ):
         self.component_key = component_key
         self._app_config = app_config
@@ -117,6 +118,8 @@ class DeepgramSTTAdapter(STTComponent):
         self._pipeline_defaults = options or {}
         self._sessions: Dict[str, _STTSessionState] = {}
         self._default_timeout = float(self._pipeline_defaults.get("response_timeout_sec", 5.0))
+        # Allow dependency injection for tests (avoids real network calls)
+        self._session_factory = session_factory or aiohttp.ClientSession
 
     async def start(self) -> None:
         # No global warm-up required yet.
@@ -138,7 +141,7 @@ class DeepgramSTTAdapter(STTComponent):
             raise RuntimeError("Deepgram STT requires an API key")
 
         # Create HTTP session for reuse across multiple transcribe() calls
-        http_session = aiohttp.ClientSession()
+        http_session = self._session_factory()
         self._sessions[call_id] = _STTSessionState(options=merged, http_session=http_session)
 
         logger.info(
@@ -189,6 +192,30 @@ class DeepgramSTTAdapter(STTComponent):
         merged = _merge_dicts(session.options, options or {})
         timeout = float(merged.get("response_timeout_sec", self._default_timeout))
         request_id = f"dg-stt-{uuid.uuid4().hex[:12]}"
+
+        # Streaming mode: push audio over WebSocket and wait for final transcript
+        if merged.get("streaming"):
+            if not session.websocket or not session.active:
+                await self.start_stream(call_id, merged)
+            await self.send_audio(call_id, audio_pcm16, fmt=merged.get("encoding", "pcm16"))
+            try:
+                await session.websocket.send(json.dumps({"type": "flush"}))
+            except Exception:
+                logger.debug("Deepgram STT failed to send flush frame", call_id=call_id)
+
+            try:
+                transcript = await asyncio.wait_for(session.transcript_queue.get(), timeout=timeout)
+                if transcript:
+                    return transcript
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Deepgram streaming transcript timeout",
+                    call_id=call_id,
+                    request_id=request_id,
+                    timeout_sec=timeout,
+                )
+                raise
+            raise RuntimeError("No transcript received from Deepgram streaming")
 
         # Get API requirements from session options (set during open_call)
         api_encoding = merged.get("encoding", "linear16")
@@ -318,6 +345,8 @@ class DeepgramSTTAdapter(STTComponent):
             "sample_rate": runtime_options.get("sample_rate", self._pipeline_defaults.get("sample_rate", self._provider_defaults.input_sample_rate_hz)),
             "smart_format": runtime_options.get("smart_format", self._pipeline_defaults.get("smart_format", True)),
             "api_key": runtime_options.get("api_key", self._pipeline_defaults.get("api_key", self._provider_defaults.api_key)),
+            # Default to streaming=True so adapters mirror provider behavior unless explicitly disabled.
+            "streaming": runtime_options.get("streaming", self._pipeline_defaults.get("streaming", True)),
         }
         if runtime_options.get("response_timeout_sec") is not None:
             merged["response_timeout_sec"] = runtime_options["response_timeout_sec"]
@@ -500,9 +529,8 @@ class DeepgramSTTAdapter(STTComponent):
     async def _receive_loop(self, call_id: str, session: _STTSessionState) -> None:
         """Async receiver loop for Deepgram streaming results."""
         try:
-            async for message in session.websocket:
-                if not session.active:
-                    break
+            while session.active and session.websocket:
+                message = await session.websocket.recv()
 
                 try:
                     data = json.loads(message) if isinstance(message, str) else message
@@ -511,10 +539,10 @@ class DeepgramSTTAdapter(STTComponent):
 
                 msg_type = data.get("type")
 
-                if msg_type == "Results":
+                if msg_type in (None, "Results"):
                     transcript = self._extract_transcript_from_streaming(data)
                     if transcript:
-                        is_final = data.get("is_final", False)
+                        is_final = data.get("is_final", False) or msg_type is None
                         speech_final = data.get("speech_final", False)
 
                         logger.debug(

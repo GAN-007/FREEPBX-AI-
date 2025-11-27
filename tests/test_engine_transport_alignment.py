@@ -8,8 +8,12 @@ from src.core.models import CallSession
 
 def _make_session(call_id: str, fmt: str, rate: int) -> CallSession:
     session = CallSession(call_id=call_id, caller_channel_id=f"{call_id}-chan")
-    session.transport_profile.format = fmt
-    session.transport_profile.sample_rate = rate
+    session.transport_profile = types.SimpleNamespace(
+        wire_encoding=fmt,
+        wire_sample_rate=rate,
+        format=fmt,
+        sample_rate=rate,
+    )
     return session
 
 
@@ -17,6 +21,7 @@ def _make_engine() -> Engine:
     engine = Engine.__new__(Engine)
     engine.providers = {}
     engine.call_audio_preferences = {}
+    engine._transport_card_logged = set()
     return engine
 
 
