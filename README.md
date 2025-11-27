@@ -1,12 +1,12 @@
 <div align="center">
 
-# Asterisk AI Voice Agent
+# FREEPBX AI Voice Agent
 
 ![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-compose-blue.svg)
-![Asterisk](https://img.shields.io/badge/asterisk-18+-orange.svg)
+![FREEPBX](https://img.shields.io/badge/asterisk-18+-orange.svg)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hkjarral/Asterisk-AI-Voice-Agent)
 [![Discord](https://dcbadge.limes.pink/api/server/CAVACtaY)](https://discord.gg/CAVACtaY)
 
@@ -101,15 +101,12 @@ The most powerful, flexible open-source AI voice agent for Asterisk/FreePBX. Fea
 * **Docker Deployment**: Simple two-service orchestration
 * **Customizable**: YAML configuration for greetings, personas, and behavior
 
-## 🎥 Demo
-
-[![Watch the demo](https://img.youtube.com/vi/ZQVny8wfCeY/hqdefault.jpg)](https://youtu.be/ZQVny8wfCeY "Asterisk AI Voice Agent demo")
 
 ### 📞 Try it Live! (US Only)
 
 Experience all four production-ready configurations with a single phone call:
 
-**Dial: (925) 736-6718**
+**Dial: (254) 736-6718**
 
 * **Press 5** → Google Live API (Multimodal AI with Gemini 2.0)
 * **Press 6** → Deepgram Voice Agent (Enterprise cloud with Think stage)
