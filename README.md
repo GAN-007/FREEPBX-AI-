@@ -15,7 +15,7 @@
 **Project Source:** [github.com/GAN-007/FREEPBX-AI-](https://github.com/GAN-007/FREEPBX-AI-)  
 **Author:** [George Alfred Nyamema](https://github.com/GAN-007)
 
-The most powerful, flexible open-source AI voice agent for Asterisk/FreePBX. Featuring a **modular pipeline architecture** that lets you mix and match STT, LLM, and TTS providers, plus **4 production-ready golden baselines** validated for enterprise deployment.
+The most powerful, flexible open-source AI voice agent for Asterisk/FreePBX. Featuring a **modular pipeline architecture** that lets you mix and match STT, LLM, and TTS providers, plus **4 production-ready golden baselines** validated for enterprise deployment. Now includes a **Claude (Sonnet 4.5) hybrid pipeline** option for teams with Anthropic access.
 
 ## 🎉 What's New in v4.3.0
 
@@ -447,6 +447,15 @@ Two-container architecture for performance and scalability:
 | OpenAI Realtime | `OPENAI_API_KEY` |
 | Deepgram Voice Agent | `DEEPGRAM_API_KEY` + `OPENAI_API_KEY` |
 | Local Hybrid | `OPENAI_API_KEY` |
+| Claude Hybrid | `CLAUDE_API_KEY` + local STT/TTS |
+
+### Quick Start (Claude or OpenAI)
+
+1. Activate env & setup (auto-activates venv if present):  
+   `./setup.sh openai --pipeline=claude_hybrid --run-install --run-quickstart --run-engine`
+2. Fill `.env` with your keys: `CLAUDE_API_KEY` (for Claude Sonnet 4.5), plus `OPENAI_API_KEY`/`DEEPGRAM_API_KEY`/`GOOGLE_API_KEY` as needed.
+3. Health check: `http://127.0.0.1:15000/health` (metrics at `/metrics`). Logs: `logs/engine.log`.
+4. Switch pipelines/providers per call via dialplan vars (`AI_PROVIDER` / `AI_CONTEXT`) or set `active_pipeline` in `config/ai-agent.yaml`.
 
 ## 🗺️ Documentation
 
