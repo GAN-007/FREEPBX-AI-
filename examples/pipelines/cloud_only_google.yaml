@@ -1,0 +1,29 @@
+# Cloud-only pipeline using Google Speech-to-Text, Generative Language (LLM), and Text-to-Speech.
+# Requirements:
+#   - GOOGLE_API_KEY or GOOGLE_APPLICATION_CREDENTIALS set for all three services.
+#   - Enable the appropriate APIs (Speech-to-Text, Generative Language, Text-to-Speech) in the Google Cloud project.
+# Audio format: engine requests PCM16 @ 16 kHz; TTS output is converted to μ-law for playback.
+providers:
+  google:
+    api_key: ${GOOGLE_API_KEY}
+    stt_model: latest-long
+    llm_model: gemini-1.5-flash
+    tts_voice: en-US-Standard-H
+    tts_audio_format: MULAW
+pipelines:
+  cloud_only_google:
+    stt: google_stt
+    llm: google_llm
+    tts: google_tts
+    options:
+      locale: en-US
+      stt:
+        enhanced: true
+        interim_results: false
+      llm:
+        temperature: 0.5
+        top_p: 0.9
+      tts:
+        speaking_rate: 1.0
+        pitch: 0.0
+active_pipeline: cloud_only_google

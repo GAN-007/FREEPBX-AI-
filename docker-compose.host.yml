@@ -1,0 +1,30 @@
+# Docker Compose Override: Host Network Mode
+#
+# ⚠️  WARNING: Host networking reduces container isolation
+# Only use this for:
+# - High-performance deployments (>100 concurrent calls)
+# - Minimizing RTP latency
+# - Same-host Asterisk installations
+# - Development/testing environments
+#
+# SECURITY REQUIREMENTS when using host mode:
+# - MUST bind to 127.0.0.1 (localhost only)
+# - MUST configure strict firewall rules
+# - NOT recommended for multi-tenant environments
+# - See docs/PRODUCTION_DEPLOYMENT.md section 3.1
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.host.yml up -d
+#
+# This will override the default bridge networking with host mode.
+
+services:
+  ai-engine:
+    network_mode: "host"
+    ports: []  # Ports don't apply in host mode
+    networks: []  # Networks don't apply in host mode
+
+  local-ai-server:
+    network_mode: "host"
+    ports: []  # Ports don't apply in host mode
+    networks: []  # Networks don't apply in host mode

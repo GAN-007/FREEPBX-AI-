@@ -1,0 +1,141 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "gridPos": {"h": 2, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "content": "# 📞 Call Details - Per-Call Tracking\n\n**Note:** Full call metadata (caller info, demo agent/context, pipeline, provider) is only available for calls made after the latest deployment. Make a new test call to see all columns populate.\n\nShows: Call ID, Caller Name, Caller Number, Demo Agent (context), Pipeline, Provider, Duration, Barge-Ins, Quality Metrics.",
+        "mode": "markdown"
+      },
+      "type": "text"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "description": "Detailed per-call information table",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "custom": {
+            "align": "left",
+            "cellOptions": {"type": "auto"},
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Duration (s)"},
+            "properties": [
+              {"id": "unit", "value": "s"},
+              {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+              {"id": "thresholds", "value": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 60},
+                  {"color": "orange", "value": 180},
+                  {"color": "red", "value": 600}
+                ]
+              }}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Barge-Ins"},
+            "properties": [
+              {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+              {"id": "thresholds", "value": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 2},
+                  {"color": "red", "value": 5}
+                ]
+              }}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 2},
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "ai_agent_call_metadata",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Call Details Table",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "Time": true,
+              "instance": true,
+              "job": true,
+              "component": true,
+              "service": true,
+              "transport": true,
+              "Value #Metadata": true
+            },
+            "indexByName": {
+              "call_id": 0,
+              "caller_name": 1,
+              "caller_number": 2,
+              "context": 3,
+              "pipeline": 4,
+              "provider": 5
+            },
+            "renameByName": {
+              "call_id": "Call ID",
+              "caller_name": "Caller Name",
+              "caller_number": "Caller Number",
+              "context": "Demo Agent",
+              "pipeline": "Pipeline",
+              "provider": "Provider"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["ai-voice-agent", "calls", "details"],
+  "time": {"from": "now-6h", "to": "now"},
+  "title": "AI Voice Agent - Call Details",
+  "uid": "call-details-table",
+  "version": 0
+}

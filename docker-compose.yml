@@ -1,0 +1,76 @@
+# Asterisk AI Voice Agent - Main Services
+#
+# DEFAULT NETWORK MODE: Bridge (Recommended)
+# - Better security with network isolation
+# - Explicit port mappings
+# - Works with firewall rules
+# - See docs/PRODUCTION_DEPLOYMENT.md section 3.1
+#
+# For host network mode (high-performance), use:
+#   docker compose -f docker-compose.yml -f docker-compose.host.yml up -d
+#
+# For optional monitoring (Prometheus + Grafana), use:
+#   docker compose -f docker-compose.monitoring.yml up -d
+#
+# See monitoring/README.md for details.
+
+services:
+  ai-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_engine
+    user: "appuser"
+    network_mode: "host"
+    volumes:
+      - ./src:/app/src
+      - ./main.py:/app/main.py
+      - ./config:/app/config
+      - ./scripts:/app/scripts
+      - ./models:/app/models
+      - /mnt/asterisk_media:/mnt/asterisk_media
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+  local-ai-server:
+    build:
+      context: ./local_ai_server
+      dockerfile: Dockerfile
+    container_name: local_ai_server
+    network_mode: "host"
+    env_file:
+      - .env
+    volumes:
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOCAL_LOG_LEVEL=${LOCAL_LOG_LEVEL:-INFO}
+      - LOCAL_DEBUG=${LOCAL_DEBUG:-0}
+      - LOCAL_STT_IDLE_MS=${LOCAL_STT_IDLE_MS:-5000}
+      - LOCAL_LLM_INFER_TIMEOUT_SEC=${LOCAL_LLM_INFER_TIMEOUT_SEC:-30}
+      - LOCAL_LLM_MODEL_PATH=${LOCAL_LLM_MODEL_PATH:-/app/models/llm/phi-3-mini-4k-instruct.Q4_K_M.gguf}
+      - LOCAL_LLM_THREADS=${LOCAL_LLM_THREADS:-16}
+      - LOCAL_LLM_CONTEXT=${LOCAL_LLM_CONTEXT:-4096}
+      - LOCAL_LLM_BATCH=${LOCAL_LLM_BATCH:-256}
+      - LOCAL_LLM_MAX_TOKENS=${LOCAL_LLM_MAX_TOKENS:-32}
+      - LOCAL_LLM_TEMPERATURE=${LOCAL_LLM_TEMPERATURE:-0.2}
+      - LOCAL_LLM_TOP_P=${LOCAL_LLM_TOP_P:-0.85}
+      - LOCAL_LLM_REPEAT_PENALTY=${LOCAL_LLM_REPEAT_PENALTY:-1.05}
+      - LOCAL_STT_MODEL_PATH=${LOCAL_STT_MODEL_PATH:-/app/models/stt/vosk-model-en-us-0.22}
+      - LOCAL_TTS_MODEL_PATH=${LOCAL_TTS_MODEL_PATH:-/app/models/tts/en_US-lessac-medium.onnx}
+      - LOCAL_LLM_USE_MLOCK=${LOCAL_LLM_USE_MLOCK:-0}
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import asyncio; import websockets; async def check(): async with websockets.connect('ws://127.0.0.1:8765', ping_interval=None) as ws: await ws.close(); asyncio.run(check())\""]
+      interval: 60s
+      timeout: 5s
+      retries: 180
+      start_period: 120s

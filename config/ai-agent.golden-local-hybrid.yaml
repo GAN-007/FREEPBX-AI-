@@ -1,0 +1,177 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Golden Baseline #3: Local Hybrid Pipeline - Privacy-Focused Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# VALIDATED CONFIGURATION - Production-ready
+#
+# Architecture: Hybrid Cloud-Local Pipeline
+#   STT: Vosk (local)   - Audio privacy, no cloud transmission of voice
+#   LLM: OpenAI (cloud) - Fast, intelligent responses via API
+#   TTS: Piper (local)  - Natural voice synthesis, offline capability
+#
+# Requirements:
+#   - OPENAI_API_KEY in .env file (for LLM only)
+#   - 8GB+ RAM recommended (16GB optimal)
+#   - Docker with local-ai-server container running
+#   - First start downloads ~200MB models (5-10 minutes)
+#
+# Performance:
+#   - Response time: 3-7 seconds (typical on modern hardware)
+#   - Audio quality: Very good (Piper TTS, local Vosk STT)
+#   - Cost: ~$0.001-0.003 per minute (only LLM charged)
+#
+# Best for:
+#   - Audio privacy compliance (HIPAA, GDPR scenarios)
+#   - Cost-sensitive deployments (90% cheaper than full cloud)
+#   - Organizations with cloud policy restrictions
+#
+# For detailed parameter explanations, see: docs/Configuration-Reference.md
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Active Configuration
+config_version: 4
+active_pipeline: local_hybrid
+default_provider: local_hybrid
+
+# Audio Transport - ExternalMedia RTP for pipelines
+audio_transport: externalmedia
+external_media:
+  codec: ulaw
+  direction: both
+  port_range: 18080:18099
+  rtp_host: 0.0.0.0
+  rtp_port: 18080
+
+# Playback Mode - File mode required for pipelines
+downstream_mode: file
+
+# Contexts
+contexts:
+  default:
+    greeting: Hello, how can I help you today?
+    profile: telephony_ulaw_8k
+    prompt: You are a helpful AI assistant. Be concise and clear.
+  demo_hybrid:
+    greeting: "Hi! I'm Ava running on a local hybrid pipeline. I'm privacy-focused - my voice stays on your server! Want to know how this project works?"
+    prompt: "You are Ava (Asterisk Voice Agent) demonstrating the Local Hybrid pipeline. Be helpful, conversational, and explain features clearly in 5-10 sentences."
+    profile: telephony_ulaw_8k
+
+# Barge-In Configuration
+barge_in:
+  enabled: true
+  energy_threshold: 700
+  initial_protection_ms: 100
+  min_ms: 150
+  post_tts_end_protection_ms: 100
+
+# VAD Configuration - Critical for pipelines
+vad:
+  enhanced_enabled: true
+  fallback_buffer_size: 128000
+  fallback_enabled: true
+  fallback_interval_ms: 4000
+  max_utterance_duration_ms: 10000
+  min_utterance_duration_ms: 600
+  use_provider_vad: false
+  utterance_padding_ms: 200
+  webrtc_aggressiveness: 1
+  webrtc_end_silence_frames: 50
+  webrtc_start_frames: 3
+
+# Streaming Configuration
+streaming:
+  chunk_size_ms: 20
+  connection_timeout_ms: 120000
+  continuous_stream: true
+  empty_backoff_ticks_max: 5
+  fallback_timeout_ms: 8000
+  greeting_min_start_ms: 40
+  jitter_buffer_ms: 950
+  keepalive_interval_ms: 5000
+  low_watermark_ms: 80
+  min_start_ms: 120
+  normalizer:
+    enabled: true
+    max_gain_db: 18.0
+    target_rms: 1400
+  provider_grace_ms: 500
+  sample_rate: 8000
+
+# Audio Profiles
+profiles:
+  default: telephony_responsive
+  telephony_ulaw_8k:
+    chunk_ms: auto
+    idle_cutoff_ms: 800
+    internal_rate_hz: 8000
+    provider_pref:
+      input_encoding: mulaw
+      input_sample_rate_hz: 8000
+      output_encoding: mulaw
+      output_sample_rate_hz: 8000
+    transport_out:
+      encoding: slin
+      sample_rate_hz: 8000
+  telephony_responsive:
+    chunk_ms: auto
+    idle_cutoff_ms: 600
+    internal_rate_hz: 8000
+    provider_pref:
+      input_encoding: mulaw
+      input_sample_rate_hz: 8000
+      output_encoding: mulaw
+      output_sample_rate_hz: 8000
+    transport_out:
+      encoding: slin
+      sample_rate_hz: 8000
+
+# Pipeline Definition - Local Hybrid (Vosk + OpenAI + Piper)
+pipelines:
+  local_hybrid:
+    llm: openai_llm
+    options:
+      llm:
+        base_url: https://api.openai.com/v1
+        max_tokens: 150
+        model: gpt-4o-mini
+        temperature: 0.7
+      stt:
+        chunk_ms: 160
+        mode: stt
+        stream_format: pcm16_16k
+        streaming: true
+      tts:
+        format:
+          encoding: mulaw
+          sample_rate: 8000
+    stt: local_stt
+    tts: local_tts
+
+# Provider Configuration - Local AI Server
+providers:
+  local:
+    chunk_ms: ${LOCAL_WS_CHUNK_MS:=320}
+    connect_timeout_sec: ${LOCAL_WS_CONNECT_TIMEOUT:=2.0}
+    enabled: true
+    llm_model: models/llm/phi-3-mini-4k-instruct.Q4_K_M.gguf
+    max_tokens: 32
+    response_timeout_sec: ${LOCAL_WS_RESPONSE_TIMEOUT:=10.0}
+    stt_model: models/stt/vosk-model-en-us-0.22
+    temperature: 0.4
+    tts_voice: models/tts/en_US-lessac-medium.onnx
+    ws_url: ${LOCAL_WS_URL:-ws://127.0.0.1:8765}
+
+# LLM Fallback Configuration
+llm:
+  initial_greeting: Hello, how can I help you today?
+  prompt: Voice assistant. Answer in 5-8 words. Be direct. Expand only if asked.
+
+# Asterisk Configuration
+asterisk:
+  app_name: asterisk-ai-voice-agent
+
+# AudioSocket (not used by ExternalMedia, but required by config schema)
+audiosocket:
+  format: slin
+  host: 0.0.0.0
+  port: 8090

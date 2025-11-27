@@ -1,0 +1,258 @@
+{
+  "tiers": {
+    "LIGHT_CPU": {
+      "description": "8-16 GB RAM, 4+ CPU cores, NO GPU; basic offline capability",
+      "requirements": {"min_ram_gb": 8, "min_cpu_cores": 4, "gpu_required": false},
+      "expectations": {
+        "stt_latency_sec": 2,
+        "llm_latency_sec": 8,
+        "tts_latency_sec": 3,
+        "two_way_summary": "Expect 10-15 seconds per conversational turn; functional MVP.",
+        "recommended_concurrent_calls": 1
+      },
+      "models": {
+        "stt": {
+          "name": "vosk-model-small-en-us-0.15",
+          "type": "zip",
+          "url": "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip",
+          "dest_dir": "models/stt",
+          "target_path": "models/stt/vosk-model-small-en-us-0.15",
+          "size_mb": 40,
+          "native_sample_rate": 16000,
+          "input_sample_rate": 8000
+        },
+        "llm": {
+          "name": "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+          "type": "file",
+          "url": "https://huggingface.co/jartine/tinyllama-1.1b-chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+          "dest_path": "models/llm/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
+          "size_mb": 570
+        },
+        "tts": {
+          "type": "files",
+          "files": [
+            {
+              "name": "en_US-lessac-medium.onnx",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
+              "dest_path": "models/tts/en_US-lessac-medium.onnx"
+            },
+            {
+              "name": "en_US-lessac-medium.onnx.json",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
+              "dest_path": "models/tts/en_US-lessac-medium.onnx.json"
+            }
+          ],
+          "size_mb": 60,
+          "native_sample_rate": 22050,
+          "target_sample_rate": 8000
+        }
+      }
+    },
+    "MEDIUM_CPU": {
+      "description": "16-32 GB RAM, 8+ CPU cores, NO GPU; balanced offline conversation",
+      "requirements": {"min_ram_gb": 16, "min_cpu_cores": 8, "gpu_required": false, "cpu_benchmark_min": 2.5},
+      "expectations": {
+        "stt_latency_sec": 2,
+        "llm_latency_sec": 12,
+        "tts_latency_sec": 3,
+        "two_way_summary": "Expect 15-20 seconds per conversational turn; production-viable on modern CPUs.",
+        "recommended_concurrent_calls": 2
+      },
+      "models": {
+        "stt": {
+          "name": "vosk-model-en-us-0.22",
+          "type": "zip",
+          "url": "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
+          "dest_dir": "models/stt",
+          "target_path": "models/stt/vosk-model-en-us-0.22",
+          "size_mb": 1800,
+          "native_sample_rate": 16000,
+          "input_sample_rate": 8000
+        },
+        "llm": {
+          "name": "phi-3-mini-4k-instruct.Q4_K_M.gguf",
+          "type": "file",
+          "url": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf",
+          "dest_path": "models/llm/phi-3-mini-4k-instruct.Q4_K_M.gguf",
+          "size_mb": 2200,
+          "params_billions": 3.8,
+          "expected_tokens_per_sec_modern_cpu": 4.0,
+          "expected_tokens_per_sec_older_cpu": 2.0
+        },
+        "tts": {
+          "type": "files",
+          "files": [
+            {
+              "name": "en_US-lessac-medium.onnx",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
+              "dest_path": "models/tts/en_US-lessac-medium.onnx"
+            },
+            {
+              "name": "en_US-lessac-medium.onnx.json",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
+              "dest_path": "models/tts/en_US-lessac-medium.onnx.json"
+            }
+          ],
+          "size_mb": 60,
+          "native_sample_rate": 22050,
+          "target_sample_rate": 8000
+        }
+      }
+    },
+    "HEAVY_CPU": {
+      "description": "32+ GB RAM, 16+ CPU cores, modern CPU (2020+), NO GPU; max CPU-only performance",
+      "requirements": {"min_ram_gb": 32, "min_cpu_cores": 16, "gpu_required": false, "cpu_benchmark_min": 4.0},
+      "expectations": {
+        "stt_latency_sec": 2,
+        "llm_latency_sec": 18,
+        "tts_latency_sec": 3,
+        "two_way_summary": "Expect 20-25 seconds per conversational turn on modern CPUs; may be 30-40s on older hardware.",
+        "recommended_concurrent_calls": 2,
+        "notes": "Older CPUs (pre-2018) should use MEDIUM_CPU tier instead"
+      },
+      "models": {
+        "stt": {
+          "name": "vosk-model-en-us-0.22",
+          "type": "zip",
+          "url": "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
+          "dest_dir": "models/stt",
+          "target_path": "models/stt/vosk-model-en-us-0.22",
+          "size_mb": 1800,
+          "native_sample_rate": 16000,
+          "input_sample_rate": 8000
+        },
+        "llm": {
+          "name": "llama-2-7b-chat.Q4_K_M.gguf",
+          "type": "file",
+          "url": "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q4_K_M.gguf",
+          "dest_path": "models/llm/llama-2-7b-chat.Q4_K_M.gguf",
+          "size_mb": 3900,
+          "params_billions": 7,
+          "expected_tokens_per_sec_modern_cpu": 3.5,
+          "expected_tokens_per_sec_older_cpu": 1.5
+        },
+        "tts": {
+          "type": "files",
+          "files": [
+            {
+              "name": "en_US-lessac-high.onnx",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx",
+              "dest_path": "models/tts/en_US-lessac-high.onnx"
+            },
+            {
+              "name": "en_US-lessac-high.onnx.json",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx.json",
+              "dest_path": "models/tts/en_US-lessac-high.onnx.json"
+            }
+          ],
+          "size_mb": 120,
+          "native_sample_rate": 22050,
+          "target_sample_rate": 8000
+        }
+      }
+    },
+    "MEDIUM_GPU": {
+      "description": "16+ GB RAM, 4+ CPU cores, GPU with 6+ GB VRAM; fast offline with GPU acceleration",
+      "requirements": {"min_ram_gb": 16, "min_cpu_cores": 4, "gpu_required": true, "min_gpu_vram_gb": 6},
+      "expectations": {
+        "stt_latency_sec": 2,
+        "llm_latency_sec": 5,
+        "tts_latency_sec": 2,
+        "two_way_summary": "Expect 8-12 seconds per conversational turn; production-ready with GPU.",
+        "recommended_concurrent_calls": 4
+      },
+      "models": {
+        "stt": {
+          "name": "vosk-model-en-us-0.22",
+          "type": "zip",
+          "url": "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
+          "dest_dir": "models/stt",
+          "target_path": "models/stt/vosk-model-en-us-0.22",
+          "size_mb": 1800,
+          "native_sample_rate": 16000,
+          "input_sample_rate": 8000
+        },
+        "llm": {
+          "name": "llama-2-7b-chat.Q4_K_M.gguf",
+          "type": "file",
+          "url": "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q4_K_M.gguf",
+          "dest_path": "models/llm/llama-2-7b-chat.Q4_K_M.gguf",
+          "size_mb": 3900,
+          "params_billions": 7,
+          "gpu_layers": -1,
+          "expected_tokens_per_sec_gpu": 15
+        },
+        "tts": {
+          "type": "files",
+          "files": [
+            {
+              "name": "en_US-lessac-high.onnx",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx",
+              "dest_path": "models/tts/en_US-lessac-high.onnx"
+            },
+            {
+              "name": "en_US-lessac-high.onnx.json",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx.json",
+              "dest_path": "models/tts/en_US-lessac-high.onnx.json"
+            }
+          ],
+          "size_mb": 120,
+          "native_sample_rate": 22050,
+          "target_sample_rate": 8000
+        }
+      }
+    },
+    "HEAVY_GPU": {
+      "description": "32+ GB RAM, 8+ CPU cores, GPU with 12+ GB VRAM; maximum performance with GPU",
+      "requirements": {"min_ram_gb": 32, "min_cpu_cores": 8, "gpu_required": true, "min_gpu_vram_gb": 12},
+      "expectations": {
+        "stt_latency_sec": 2,
+        "llm_latency_sec": 8,
+        "tts_latency_sec": 2,
+        "two_way_summary": "Expect 10-15 seconds per conversational turn; high-quality production.",
+        "recommended_concurrent_calls": 8
+      },
+      "models": {
+        "stt": {
+          "name": "vosk-model-en-us-0.22",
+          "type": "zip",
+          "url": "https://alphacephei.com/vosk/models/vosk-model-en-us-0.22.zip",
+          "dest_dir": "models/stt",
+          "target_path": "models/stt/vosk-model-en-us-0.22",
+          "size_mb": 1800,
+          "native_sample_rate": 16000,
+          "input_sample_rate": 8000
+        },
+        "llm": {
+          "name": "llama-2-13b-chat.Q4_K_M.gguf",
+          "type": "file",
+          "url": "https://huggingface.co/TheBloke/Llama-2-13B-chat-GGUF/resolve/main/llama-2-13b-chat.Q4_K_M.gguf",
+          "dest_path": "models/llm/llama-2-13b-chat.Q4_K_M.gguf",
+          "size_mb": 7300,
+          "params_billions": 13,
+          "gpu_layers": -1,
+          "expected_tokens_per_sec_gpu": 12,
+          "notes": "Requires GPU with 12GB+ VRAM; CPU-only will be too slow"
+        },
+        "tts": {
+          "type": "files",
+          "files": [
+            {
+              "name": "en_US-lessac-high.onnx",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx",
+              "dest_path": "models/tts/en_US-lessac-high.onnx"
+            },
+            {
+              "name": "en_US-lessac-high.onnx.json",
+              "url": "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/en_US-lessac-high.onnx.json",
+              "dest_path": "models/tts/en_US-lessac-high.onnx.json"
+            }
+          ],
+          "size_mb": 120,
+          "native_sample_rate": 22050,
+          "target_sample_rate": 8000
+        }
+      }
+    }
+  }
+}

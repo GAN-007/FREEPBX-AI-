@@ -1,0 +1,296 @@
+"""
+Unit tests for config.security module.
+
+Tests cover:
+- Asterisk credential injection (environment variables only)
+- LLM config merge (YAML + environment variables)
+- Provider API key injection
+- String token expansion
+"""
+
+import os
+import pytest
+
+from src.config.security import (
+    _is_nonempty_string,
+    expand_string_tokens,
+    inject_asterisk_credentials,
+    inject_llm_config,
+    inject_provider_api_keys,
+)
+
+
+class TestIsNonemptyString:
+    """Tests for _is_nonempty_string helper."""
+    
+    def test_valid_string_returns_true(self):
+        """Non-empty string should return True."""
+        assert _is_nonempty_string("hello") is True
+        assert _is_nonempty_string("test value") is True
+    
+    def test_empty_string_returns_false(self):
+        """Empty string should return False."""
+        assert _is_nonempty_string("") is False
+    
+    def test_whitespace_only_returns_false(self):
+        """Whitespace-only string should return False."""
+        assert _is_nonempty_string("   ") is False
+        assert _is_nonempty_string("\t\n") is False
+    
+    def test_non_string_returns_false(self):
+        """Non-string values should return False."""
+        assert _is_nonempty_string(None) is False
+        assert _is_nonempty_string(42) is False
+        assert _is_nonempty_string([]) is False
+        assert _is_nonempty_string({}) is False
+
+
+class TestExpandStringTokens:
+    """Tests for expand_string_tokens function."""
+    
+    def test_expand_dollar_brace(self, monkeypatch):
+        """Should expand ${VAR} tokens."""
+        monkeypatch.setenv("TEST_VAR", "test_value")
+        result = expand_string_tokens("prefix_${TEST_VAR}_suffix")
+        assert result == "prefix_test_value_suffix"
+    
+    def test_expand_dollar_only(self, monkeypatch):
+        """Should expand $VAR tokens."""
+        monkeypatch.setenv("MY_VAR", "my_value")
+        result = expand_string_tokens("value: $MY_VAR")
+        assert result == "value: my_value"
+    
+    def test_undefined_var_left_unchanged(self):
+        """Undefined variables should be left unchanged."""
+        result = expand_string_tokens("${UNDEFINED_VAR}")
+        assert result == "${UNDEFINED_VAR}"
+    
+    def test_empty_string_returns_empty(self):
+        """Empty string should return empty string."""
+        result = expand_string_tokens("")
+        assert result == ""
+    
+    def test_none_returns_empty(self):
+        """None should return empty string."""
+        result = expand_string_tokens(None)
+        assert result == ""
+
+
+class TestInjectAsteriskCredentials:
+    """Tests for inject_asterisk_credentials function."""
+    
+    def test_inject_credentials_from_env(self, monkeypatch):
+        """Should inject Asterisk credentials from environment."""
+        monkeypatch.setenv("ASTERISK_HOST", "192.168.1.10")
+        monkeypatch.setenv("ASTERISK_ARI_USERNAME", "test_user")
+        monkeypatch.setenv("ASTERISK_ARI_PASSWORD", "test_pass")
+        
+        config_data = {}
+        inject_asterisk_credentials(config_data)
+        
+        assert config_data['asterisk']['host'] == "192.168.1.10"
+        assert config_data['asterisk']['username'] == "test_user"
+        assert config_data['asterisk']['password'] == "test_pass"
+        assert config_data['asterisk']['app_name'] == "asterisk-ai-voice-agent"
+    
+    def test_use_ari_prefix_fallback(self, monkeypatch):
+        """Should fall back to ARI_ prefix for username/password."""
+        monkeypatch.setenv("ARI_USERNAME", "fallback_user")
+        monkeypatch.setenv("ARI_PASSWORD", "fallback_pass")
+        
+        config_data = {}
+        inject_asterisk_credentials(config_data)
+        
+        assert config_data['asterisk']['username'] == "fallback_user"
+        assert config_data['asterisk']['password'] == "fallback_pass"
+    
+    def test_default_host_if_not_set(self):
+        """Should use 127.0.0.1 as default host."""
+        config_data = {}
+        inject_asterisk_credentials(config_data)
+        
+        assert config_data['asterisk']['host'] == "127.0.0.1"
+    
+    def test_preserve_app_name_from_yaml(self):
+        """Should preserve app_name from YAML if present."""
+        config_data = {
+            'asterisk': {
+                'app_name': 'custom-app-name'
+            }
+        }
+        inject_asterisk_credentials(config_data)
+        
+        assert config_data['asterisk']['app_name'] == 'custom-app-name'
+    
+    def test_overwrite_yaml_credentials(self, monkeypatch):
+        """SECURITY: Should overwrite YAML credentials with env vars."""
+        monkeypatch.setenv("ASTERISK_HOST", "env_host")
+        monkeypatch.setenv("ASTERISK_ARI_USERNAME", "env_user")
+        monkeypatch.setenv("ASTERISK_ARI_PASSWORD", "env_pass")
+        
+        config_data = {
+            'asterisk': {
+                'host': 'yaml_host',
+                'username': 'yaml_user',
+                'password': 'yaml_pass'
+            }
+        }
+        inject_asterisk_credentials(config_data)
+        
+        # Environment variables should take precedence
+        assert config_data['asterisk']['host'] == "env_host"
+        assert config_data['asterisk']['username'] == "env_user"
+        assert config_data['asterisk']['password'] == "env_pass"
+
+
+class TestInjectLlmConfig:
+    """Tests for inject_llm_config function."""
+    
+    def test_use_yaml_values_when_present(self):
+        """Should use YAML values when they are non-empty."""
+        config_data = {
+            'llm': {
+                'initial_greeting': 'YAML greeting',
+                'prompt': 'YAML prompt',
+                'model': 'gpt-4'
+            }
+        }
+        inject_llm_config(config_data)
+        
+        assert config_data['llm']['initial_greeting'] == 'YAML greeting'
+        assert config_data['llm']['prompt'] == 'YAML prompt'
+        assert config_data['llm']['model'] == 'gpt-4'
+    
+    def test_fallback_to_env_vars(self, monkeypatch):
+        """Should fall back to environment variables when YAML is empty."""
+        monkeypatch.setenv("GREETING", "Env greeting")
+        monkeypatch.setenv("AI_ROLE", "Env role")
+        
+        config_data = {'llm': {}}
+        inject_llm_config(config_data)
+        
+        assert config_data['llm']['initial_greeting'] == "Env greeting"
+        assert config_data['llm']['prompt'] == "Env role"
+    
+    def test_use_hardcoded_defaults(self):
+        """Should use hardcoded defaults when neither YAML nor env is set."""
+        config_data = {}
+        inject_llm_config(config_data)
+        
+        assert config_data['llm']['initial_greeting'] == "Hello, how can I help you?"
+        assert config_data['llm']['prompt'] == "You are a helpful assistant."
+        assert config_data['llm']['model'] == "gpt-4o"
+    
+    def test_api_key_from_env_only(self, monkeypatch):
+        """SECURITY: API key should ONLY come from environment."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-env-key")
+        
+        config_data = {
+            'llm': {
+                'api_key': 'sk-yaml-key'  # This should be ignored
+            }
+        }
+        inject_llm_config(config_data)
+        
+        # Environment variable should take precedence
+        assert config_data['llm']['api_key'] == "sk-env-key"
+    
+    def test_expand_env_tokens_in_greeting(self, monkeypatch):
+        """Should expand ${VAR} tokens in greeting."""
+        monkeypatch.setenv("COMPANY_NAME", "Acme Corp")
+        
+        config_data = {
+            'llm': {
+                'initial_greeting': 'Welcome to ${COMPANY_NAME}!'
+            }
+        }
+        inject_llm_config(config_data)
+        
+        assert config_data['llm']['initial_greeting'] == "Welcome to Acme Corp!"
+    
+    def test_expand_env_tokens_in_prompt(self, monkeypatch):
+        """Should expand ${VAR} tokens in prompt."""
+        monkeypatch.setenv("AGENT_NAME", "Ava")
+        
+        config_data = {
+            'llm': {
+                'prompt': 'You are ${AGENT_NAME}, a helpful assistant.'
+            }
+        }
+        inject_llm_config(config_data)
+        
+        assert config_data['llm']['prompt'] == "You are Ava, a helpful assistant."
+
+
+class TestInjectProviderApiKeys:
+    """Tests for inject_provider_api_keys function."""
+    
+    def test_inject_openai_key(self, monkeypatch):
+        """Should inject OpenAI API key from environment."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai-test")
+        
+        config_data = {'providers': {'openai': {}}}
+        inject_provider_api_keys(config_data)
+        
+        assert config_data['providers']['openai']['api_key'] == "sk-openai-test"
+    
+    def test_inject_deepgram_key(self, monkeypatch):
+        """Should inject Deepgram API key from environment."""
+        monkeypatch.setenv("DEEPGRAM_API_KEY", "dg-test-key")
+        
+        config_data = {'providers': {'deepgram': {}}}
+        inject_provider_api_keys(config_data)
+        
+        assert config_data['providers']['deepgram']['api_key'] == "dg-test-key"
+    
+    def test_inject_google_key(self, monkeypatch):
+        """Should inject Google API key from environment."""
+        monkeypatch.setenv("GOOGLE_API_KEY", "google-test-key")
+        
+        config_data = {'providers': {'google_live': {}}}
+        inject_provider_api_keys(config_data)
+        
+        assert config_data['providers']['google_live']['api_key'] == "google-test-key"
+    
+    def test_inject_multiple_keys(self, monkeypatch):
+        """Should inject multiple provider keys at once."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-openai")
+        monkeypatch.setenv("DEEPGRAM_API_KEY", "dg-key")
+        monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
+        
+        config_data = {
+            'providers': {
+                'openai': {},
+                'deepgram': {},
+                'google_live': {}
+            }
+        }
+        inject_provider_api_keys(config_data)
+        
+        assert config_data['providers']['openai']['api_key'] == "sk-openai"
+        assert config_data['providers']['deepgram']['api_key'] == "dg-key"
+        assert config_data['providers']['google_live']['api_key'] == "google-key"
+    
+    def test_handle_missing_providers_block(self):
+        """Should handle config without providers block gracefully."""
+        config_data = {}
+        inject_provider_api_keys(config_data)
+        
+        # Should not raise an error
+        assert 'providers' in config_data
+    
+    def test_overwrite_yaml_api_keys(self, monkeypatch):
+        """SECURITY: Should overwrite YAML API keys with env vars."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-env-key")
+        
+        config_data = {
+            'providers': {
+                'openai': {
+                    'api_key': 'sk-yaml-key'  # This should be overwritten
+                }
+            }
+        }
+        inject_provider_api_keys(config_data)
+        
+        # Environment variable should take precedence
+        assert config_data['providers']['openai']['api_key'] == "sk-env-key"

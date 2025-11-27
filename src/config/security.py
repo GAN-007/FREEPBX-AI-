@@ -1,0 +1,172 @@
+"""
+Security-critical configuration injection.
+
+This module handles:
+- Asterisk credentials (ONLY from environment variables)
+- LLM configuration merge (YAML + environment variables)
+- Provider API key injection (ONLY from environment variables)
+- Environment variable token expansion
+
+SECURITY POLICY:
+- API keys and passwords MUST NEVER be in YAML files
+- All credentials MUST come from environment variables only
+- This separation prevents accidental credential exposure in version control
+"""
+
+import os
+from typing import Any, Dict
+
+
+def _is_nonempty_string(val: Any) -> bool:
+    """
+    Check if value is a non-empty string.
+    
+    Args:
+        val: Value to check
+        
+    Returns:
+        True if val is a string with non-whitespace content
+        
+    Complexity: 2
+    """
+    return isinstance(val, str) and val.strip() != ""
+
+
+def expand_string_tokens(value: str) -> str:
+    """
+    Expand environment variable tokens in a string.
+    
+    Supports ${VAR} and $VAR syntax. If variable is undefined,
+    it is left unchanged.
+    
+    Args:
+        value: String that may contain ${VAR} or $VAR tokens
+        
+    Returns:
+        String with environment variables expanded
+        
+    Complexity: 2
+    """
+    try:
+        return os.path.expandvars(value or "")
+    except Exception:
+        return value or ""
+
+
+def inject_asterisk_credentials(config_data: Dict[str, Any]) -> None:
+    """
+    Inject Asterisk credentials from environment variables ONLY.
+    
+    SECURITY: Credentials must NEVER be in YAML files.
+    This function overwrites any YAML values with environment variables.
+    
+    Environment variables:
+    - ASTERISK_HOST (default: 127.0.0.1)
+    - ASTERISK_ARI_USERNAME or ARI_USERNAME (required)
+    - ASTERISK_ARI_PASSWORD or ARI_PASSWORD (required)
+    
+    Args:
+        config_data: Configuration dictionary to modify in-place
+        
+    Complexity: 2
+    """
+    asterisk_yaml = (config_data.get('asterisk') or {}) if isinstance(config_data.get('asterisk'), dict) else {}
+    
+    config_data['asterisk'] = {
+        "host": os.getenv("ASTERISK_HOST", "127.0.0.1"),
+        "username": os.getenv("ASTERISK_ARI_USERNAME") or os.getenv("ARI_USERNAME"),
+        "password": os.getenv("ASTERISK_ARI_PASSWORD") or os.getenv("ARI_PASSWORD"),
+        "app_name": asterisk_yaml.get("app_name", "asterisk-ai-voice-agent")
+    }
+
+
+def inject_llm_config(config_data: Dict[str, Any]) -> None:
+    """
+    Merge LLM configuration from YAML and environment variables.
+    
+    Precedence: YAML llm.* (if non-empty) > env vars > hardcoded defaults
+    
+    SECURITY: API keys ONLY from environment variables.
+    
+    Environment variables:
+    - GREETING: Initial greeting (fallback)
+    - AI_ROLE: System prompt/persona (fallback)
+    - OPENAI_API_KEY: API key (REQUIRED, overrides YAML)
+    
+    Args:
+        config_data: Configuration dictionary to modify in-place
+        
+    Complexity: 5
+    """
+    llm_yaml = (config_data.get('llm') or {}) if isinstance(config_data.get('llm'), dict) else {}
+    
+    # Resolve initial_greeting
+    initial_greeting = llm_yaml.get('initial_greeting')
+    if not _is_nonempty_string(initial_greeting):
+        initial_greeting = os.getenv("GREETING", "Hello, how can I help you?")
+    
+    # Resolve prompt/persona
+    prompt_val = llm_yaml.get('prompt')
+    if not _is_nonempty_string(prompt_val):
+        prompt_val = os.getenv("AI_ROLE", "You are a helpful assistant.")
+    
+    # Resolve model
+    model_val = llm_yaml.get('model') or "gpt-4o"
+    
+    # SECURITY: API keys ONLY from environment variables, never YAML
+    api_key_val = os.getenv("OPENAI_API_KEY")
+    
+    # Apply environment variable interpolation to support ${VAR} placeholders
+    initial_greeting = expand_string_tokens(initial_greeting)
+    prompt_val = expand_string_tokens(prompt_val)
+    
+    config_data['llm'] = {
+        "initial_greeting": initial_greeting,
+        "prompt": prompt_val,
+        "model": model_val,
+        "api_key": api_key_val,
+    }
+
+
+def inject_provider_api_keys(config_data: Dict[str, Any]) -> None:
+    """
+    Inject provider API keys from environment variables ONLY.
+    
+    SECURITY: API keys must ONLY come from environment variables, never YAML.
+    This function is specifically for pipeline adapters that need explicit API keys.
+    
+    Environment variables:
+    - OPENAI_API_KEY: OpenAI provider API key
+    - DEEPGRAM_API_KEY: Deepgram provider API key
+    - GOOGLE_API_KEY: Google provider API key
+    
+    Args:
+        config_data: Configuration dictionary to modify in-place
+        
+    Complexity: 4
+    """
+    try:
+        providers_block = config_data.get('providers', {}) or {}
+        
+        # Inject OPENAI_API_KEY
+        openai_block = providers_block.get('openai', {}) or {}
+        if isinstance(openai_block, dict):
+            openai_block['api_key'] = os.getenv('OPENAI_API_KEY')
+            providers_block['openai'] = openai_block
+        
+        # Inject DEEPGRAM_API_KEY
+        deepgram_block = providers_block.get('deepgram', {}) or {}
+        if isinstance(deepgram_block, dict):
+            deepgram_block['api_key'] = os.getenv('DEEPGRAM_API_KEY')
+            providers_block['deepgram'] = deepgram_block
+        
+        # Inject GOOGLE_API_KEY (for google_live provider)
+        google_live_block = providers_block.get('google_live', {}) or {}
+        if isinstance(google_live_block, dict):
+            google_live_block['api_key'] = os.getenv('GOOGLE_API_KEY')
+            providers_block['google_live'] = google_live_block
+        
+        config_data['providers'] = providers_block
+    except Exception:
+        # Non-fatal; Pydantic may still raise if keys are missing
+        pass

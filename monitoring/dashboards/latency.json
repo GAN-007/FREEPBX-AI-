@@ -1,0 +1,74 @@
+{
+  "id": null,
+  "title": "Latency",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "STT→TTS P50 (s)",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le) (rate(ai_agent_stt_to_tts_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "STT→TTS P95 (s)",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(ai_agent_stt_to_tts_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Turn Response P50 (s)",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le) (rate(ai_agent_turn_response_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Turn Response P95 (s)",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(ai_agent_turn_response_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "STT→TTS P50 by provider",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le, provider) (rate(ai_agent_stt_to_tts_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Turn Response P50 by provider",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le, provider) (rate(ai_agent_turn_response_seconds_bucket[$__rate_interval])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "STT→TTS Count (rate)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "targets": [
+        {"expr": "sum by (pipeline, provider) (rate(ai_agent_stt_to_tts_seconds_count[$__rate_interval]))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Turn Response Count (rate)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "targets": [
+        {"expr": "sum by (pipeline, provider) (rate(ai_agent_turn_response_seconds_count[$__rate_interval]))", "refId": "A"}
+      ]
+    }
+  ]
+}

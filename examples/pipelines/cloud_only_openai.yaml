@@ -1,0 +1,30 @@
+# Cloud-only OpenAI pipeline: OpenAI STT + OpenAI LLM + OpenAI TTS
+# Requirements:
+#   - OPENAI_API_KEY exported or present in providers.openai.api_key
+#   - AudioSocket configured for PCM16 8 kHz (slin16) input
+
+providers:
+  openai:
+    api_key: ${OPENAI_API_KEY}
+    realtime_model: gpt-4o-realtime-preview-2024-12-17
+    chat_model: gpt-4o-mini
+    tts_model: gpt-4o-mini-tts
+
+pipelines:
+  cloud_only_openai:
+    stt: openai_stt
+    llm: openai_llm
+    tts: openai_tts
+    options:
+      stt:
+        base_url: "wss://api.openai.com/v1/realtime"
+      llm:
+        base_url: "https://api.openai.com/v1"
+        model: "gpt-4o-realtime-preview-2024-12-17"
+      tts:
+        base_url: "https://api.openai.com/v1/audio/speech"
+        format:
+          encoding: linear16
+          sample_rate: 24000
+
+active_pipeline: cloud_only_openai

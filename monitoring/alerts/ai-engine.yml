@@ -1,0 +1,213 @@
+# Prometheus Alert Rules for AI Voice Agent
+# These rules monitor call quality, performance, and system health
+
+groups:
+  - name: call_quality
+    interval: 10s
+    rules:
+      - alert: HighTurnResponseLatency
+        expr: histogram_quantile(0.95, rate(ai_agent_turn_response_seconds_bucket[1m])) > 2.0
+        for: 2m
+        labels:
+          severity: warning
+          component: call_quality
+        annotations:
+          summary: "High turn response latency detected"
+          description: "95th percentile turn response time is {{ $value | humanizeDuration }} (threshold: 2s)"
+          runbook: "Check provider health, network latency, and LLM response times"
+
+      - alert: CriticalTurnResponseLatency
+        expr: histogram_quantile(0.95, rate(ai_agent_turn_response_seconds_bucket[1m])) > 5.0
+        for: 1m
+        labels:
+          severity: critical
+          component: call_quality
+        annotations:
+          summary: "CRITICAL: Turn response latency exceeded 5 seconds"
+          description: "95th percentile turn response time is {{ $value | humanizeDuration }}"
+          runbook: "Immediate investigation required. Check provider status, restart ai_engine if needed"
+
+      - alert: SlowSTTtoTTS
+        expr: histogram_quantile(0.95, rate(ai_agent_stt_to_tts_seconds_bucket[1m])) > 1.5
+        for: 2m
+        labels:
+          severity: warning
+          component: call_quality
+        annotations:
+          summary: "Slow STT to TTS processing"
+          description: "95th percentile STT→TTS latency is {{ $value | humanizeDuration }} for provider {{ $labels.provider }}"
+          runbook: "Check LLM provider status and API latency"
+
+  - name: audio_quality
+    interval: 10s
+    rules:
+      - alert: HighUnderflowRate
+        expr: rate(ai_agent_stream_underflow_events_total[1m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: audio_quality
+        annotations:
+          summary: "High audio underflow rate detected"
+          description: "Underflow rate is {{ $value | humanize }}/sec for call {{ $labels.call_id }}"
+          runbook: "Check jitter buffer settings, network conditions, and provider delivery rate"
+
+      - alert: FrequentStreamingFallbacks
+        expr: rate(ai_agent_streaming_fallbacks_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          component: audio_quality
+        annotations:
+          summary: "Frequent streaming fallbacks to file playback"
+          description: "Fallback rate is {{ $value | humanize }}/sec"
+          runbook: "Check AudioSocket connectivity and streaming configuration"
+
+      - alert: LowJitterBufferDepth
+        expr: ai_agent_streaming_jitter_buffer_depth < 2
+        for: 30s
+        labels:
+          severity: warning
+          component: audio_quality
+        annotations:
+          summary: "Jitter buffer running low"
+          description: "Buffer depth is {{ $value }} chunks for call {{ $labels.call_id }}"
+          runbook: "Monitor for underflows, may indicate slow provider or network issues"
+
+      - alert: CodecMismatch
+        expr: ai_agent_codec_alignment == 0
+        for: 30s
+        labels:
+          severity: warning
+          component: audio_quality
+        annotations:
+          summary: "Provider codec/sample rate misalignment"
+          description: "Provider {{ $labels.provider }} has codec misalignment on call {{ $labels.call_id }}"
+          runbook: "Check transport profile and provider configuration alignment"
+
+  - name: connection_health
+    interval: 10s
+    rules:
+      - alert: NoAudioSocketConnections
+        expr: ai_agent_audiosocket_active_connections == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: connectivity
+        annotations:
+          summary: "No active AudioSocket connections"
+          description: "AudioSocket has had zero connections for 1 minute"
+          runbook: "Check Asterisk dialplan, AudioSocket server logs, network connectivity"
+
+      - alert: AudioSocketConnectionSpike
+        expr: rate(ai_agent_audiosocket_active_connections[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          component: connectivity
+        annotations:
+          summary: "Unusual spike in AudioSocket connections"
+          description: "Connection rate is {{ $value | humanize }}/sec"
+          runbook: "May indicate call storm or connection leak. Monitor ai_engine logs"
+
+  - name: barge_in_performance
+    interval: 10s
+    rules:
+      - alert: SlowBargeInReaction
+        expr: histogram_quantile(0.95, rate(ai_agent_barge_in_reaction_seconds_bucket[1m])) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          component: barge_in
+        annotations:
+          summary: "Slow barge-in reaction time"
+          description: "95th percentile barge-in reaction is {{ $value | humanizeDuration }}"
+          runbook: "Check VAD configuration, energy thresholds, and gating logic"
+
+      - alert: HighBargeInRate
+        expr: rate(ai_agent_barge_in_events_total[1m]) > 3
+        for: 2m
+        labels:
+          severity: info
+          component: barge_in
+        annotations:
+          summary: "High barge-in event rate"
+          description: "Barge-in rate is {{ $value | humanize }}/sec for call {{ $labels.call_id }}"
+          runbook: "Normal for interactive calls, but may indicate user frustration or VAD sensitivity"
+
+  - name: vad_health
+    interval: 10s
+    rules:
+      - alert: LowVADConfidence
+        expr: histogram_quantile(0.50, rate(ai_agent_vad_confidence_bucket[1m])) < 0.4
+        for: 2m
+        labels:
+          severity: warning
+          component: vad
+        annotations:
+          summary: "Low VAD confidence detected"
+          description: "Median VAD confidence is {{ $value | humanize }} for call {{ $labels.call_id }}"
+          runbook: "Check for noisy audio, adjust energy thresholds or WebRTC aggressiveness"
+
+      - alert: VADAdaptiveThresholdAnomaly
+        expr: ai_agent_vad_adaptive_threshold > 5000
+        for: 1m
+        labels:
+          severity: warning
+          component: vad
+        annotations:
+          summary: "VAD adaptive threshold unusually high"
+          description: "Adaptive threshold is {{ $value }} for call {{ $labels.call_id }}"
+          runbook: "May indicate very noisy environment or misconfiguration"
+
+  - name: system_health
+    interval: 15s
+    rules:
+      - alert: HealthEndpointDown
+        expr: up{job="ai-engine"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "AI Engine health endpoint is down"
+          description: "Cannot scrape metrics from ai_engine:15000"
+          runbook: "Check if ai_engine container is running, restart if needed"
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="ai-engine"} > 2e9
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage in ai_engine"
+          description: "Memory usage is {{ $value | humanize1024 }}"
+          runbook: "Check for memory leaks, consider increasing container limits"
+
+  - name: provider_health
+    interval: 10s
+    rules:
+      - alert: DeepgramHighACKLatency
+        expr: ai_agent_deepgram_settings_ack_latency_ms > 500
+        for: 1m
+        labels:
+          severity: warning
+          component: provider
+          provider: deepgram
+        annotations:
+          summary: "High Deepgram settings ACK latency"
+          description: "ACK latency is {{ $value }}ms for call {{ $labels.call_id }}"
+          runbook: "Check Deepgram API status and network latency"
+
+      - alert: OpenAISampleRateMismatch
+        expr: abs(ai_agent_openai_measured_output_sample_rate_hz - ai_agent_openai_assumed_output_sample_rate_hz) > 1000
+        for: 30s
+        labels:
+          severity: warning
+          component: provider
+          provider: openai_realtime
+        annotations:
+          summary: "OpenAI sample rate mismatch detected"
+          description: "Measured: {{ $value }}Hz, Expected: {{ $labels.assumed }}Hz for call {{ $labels.call_id }}"
+          runbook: "Check OpenAI Realtime session configuration and resampling logic"

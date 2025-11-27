@@ -1,0 +1,29 @@
+# Local-only pipeline example for internal testing and smoke regression
+# Requires the local AI server; configure LOCAL_AI_SERVER_WS (default ws://127.0.0.1:8765).
+# Audio format: local adapters operate on PCM16 @ 16 kHz, engine handles μ-law conversion for playback.
+providers:
+  local:
+    enable_stt: true
+    enable_llm: true
+    enable_tts: true
+    # Optional: override default local models or voices when packaging images.
+    stt_model: vosk-small-en-us-0.15
+    llm_model: tinyllama-chat
+    tts_voice: en-US-multispeaker
+pipelines:
+  local_only:
+    stt: local_stt
+    llm: local_llm
+    tts: local_tts
+    options:
+      locale: en-US
+      stt:
+        chunk_ms: 320
+        streaming: true
+        stream_format: "pcm16_16k"
+      llm:
+        temperature: 0.4
+        max_tokens: 64
+      tts:
+        format: ulaw
+active_pipeline: local_only

@@ -1,0 +1,198 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "gridPos": {"h": 2, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "content": "# 📊 Total Calls Overview - Demo Call Tracking\n\nComprehensive metrics for all incoming demo calls including caller info, pipeline selection, performance, and quality indicators.",
+        "mode": "markdown"
+      },
+      "type": "text"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "blue", "value": null}, {"color": "green", "value": 1}]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 0, "y": 2},
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"values": false, "calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "count(count by (call_id) (ai_agent_stream_started_total)) or vector(0)",
+        "instant": true,
+        "legendFormat": "Total Calls"
+      }],
+      "title": "Total Calls",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 3}]
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 4, "y": 2},
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "count(ai_agent_streaming_active == 1) or vector(0)",
+        "instant": true,
+        "legendFormat": "Active Now"
+      }],
+      "title": "Active Calls",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 5}]
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 8, "y": 2},
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "sum(ai_agent_barge_in_events_total) or vector(0)",
+        "instant": true,
+        "legendFormat": "Barge-Ins"
+      }],
+      "title": "Total Barge-Ins",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 2}]
+          },
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 12, "y": 2},
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "histogram_quantile(0.50, sum(rate(ai_agent_turn_response_seconds_bucket[5m])) by (le)) or vector(0)",
+        "instant": true,
+        "legendFormat": "p50 Latency"
+      }],
+      "title": "Avg Response Time (p50)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "blue", "value": null}, {"color": "green", "value": 10}]
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 16, "y": 2},
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "sum(ai_agent_stream_started_total) or vector(0)",
+        "instant": true,
+        "legendFormat": "TTS Segments"
+      }],
+      "title": "TTS Responses Played",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 5}]
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 4, "x": 20, "y": 2},
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "textMode": "value_and_name"
+      },
+      "targets": [{
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "expr": "sum(ai_agent_stream_underflow_events_total) or vector(0)",
+        "instant": true,
+        "legendFormat": "Underflows"
+      }],
+      "title": "Audio Quality Issues",
+      "type": "stat"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["ai-voice-agent", "calls", "overview"],
+  "time": {"from": "now-6h", "to": "now"},
+  "title": "AI Voice Agent - Total Calls Overview",
+  "uid": "total-calls-overview",
+  "version": 0
+}
