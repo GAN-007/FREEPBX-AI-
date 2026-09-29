@@ -9,6 +9,7 @@ only execution authority.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import time
 from typing import Any, Awaitable, Callable, Dict, Optional
@@ -42,6 +43,7 @@ class VoiceDecisionPlane:
         self.api_key = (api_key or "").strip()
         self.timeout_seconds = max(0.1, float(timeout_seconds))
         self._request_fn = request_fn
+        self._shadow_tasks: set[asyncio.Task[Any]] = set()
 
     @classmethod
     def from_env(cls) -> "VoiceDecisionPlane":
@@ -73,6 +75,77 @@ class VoiceDecisionPlane:
                 if not isinstance(data, dict):
                     raise RuntimeError("System-One response must be a JSON object")
                 return data
+
+    @staticmethod
+    def render_advisory_context(decision: Dict[str, Any]) -> str:
+        """Render bounded, provider-neutral context for existing LLM adapters."""
+        answers = decision.get("answers") if isinstance(decision, dict) else None
+        if not isinstance(answers, dict):
+            answers = {}
+        compact = {
+            "source": "laya-system-one",
+            "advisory_only": True,
+            "intent": (answers.get("intent") or {}).get("choice"),
+            "priority_score": (answers.get("priority") or {}).get("score"),
+            "emergency_probability": (answers.get("emergency") or {}).get("noul"),
+            "enterprise_probability": (answers.get("enterprise_account") or {}).get("noul"),
+            "human_needed_probability": (answers.get("human_needed") or {}).get("noul"),
+            "spam_or_abuse_probability": (answers.get("spam_or_abuse") or {}).get("noul"),
+        }
+        return (
+            "SYSTEM-ONE ADVISORY (non-authoritative; never execute a tool solely from this metadata):\n"
+            + json.dumps(compact, separators=(",", ":"), ensure_ascii=False)
+        )
+
+    def _track_shadow_task(self, task: asyncio.Task[Any]) -> None:
+        self._shadow_tasks.add(task)
+
+        def _done(completed: asyncio.Task[Any]) -> None:
+            self._shadow_tasks.discard(completed)
+            try:
+                completed.result()
+            except Exception as exc:  # classify is fail-open, this is a final safety net
+                logger.debug("Voice System-One background task failed", error=str(exc))
+
+        task.add_done_callback(_done)
+
+    async def prepare_turn(
+        self,
+        transcript: str,
+        *,
+        call_id: str,
+        pipeline: str,
+        provider: str,
+        caller_number: str | None = None,
+    ) -> tuple[str, Optional[Dict[str, Any]]]:
+        """Return the LLM transcript plus optional advisory metadata.
+
+        Shadow mode is deliberately non-blocking: classification runs in the
+        background and the incumbent LLM receives the original transcript.
+        Advisory mode waits within the bounded timeout and prepends a compact
+        provider-neutral advisory block so every existing LLM adapter receives
+        the same typed evidence without changing tool execution authority.
+        """
+        original = (transcript or "").strip()
+        if not original or not self.enabled:
+            return transcript, None
+
+        kwargs = {
+            "call_id": call_id,
+            "pipeline": pipeline,
+            "provider": provider,
+            "caller_number": caller_number,
+        }
+        if self.mode == "shadow":
+            task = asyncio.create_task(self.classify(original, **kwargs))
+            self._track_shadow_task(task)
+            return transcript, None
+
+        decision = await self.classify(original, **kwargs)
+        if decision is None:
+            return transcript, None
+        decorated = f"{self.render_advisory_context(decision)}\n\nCALLER TRANSCRIPT:\n{original}"
+        return decorated, decision
 
     async def classify(
         self,
