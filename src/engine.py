@@ -53,6 +53,7 @@ from .core.transport_orchestrator import TransportOrchestrator, TransportProfile
 from .core.models import CallSession
 from .utils.audio_capture import AudioCaptureManager
 from src.pipelines.base import LLMResponse
+from .decision_plane import VoiceDecisionPlane
 
 logger = get_logger(__name__)
 
@@ -171,6 +172,7 @@ class Engine:
         self.conversation_coordinator.set_playback_manager(self.playback_manager)
         # Per-call transcript timing cache for latency histograms
         self._last_transcript_ts: Dict[str, float] = {}
+        self.system_one = VoiceDecisionPlane.from_env()
         
         # Initialize streaming playback manager
         streaming_config = {}
@@ -5013,15 +5015,24 @@ class Engine:
                     provider_label = getattr(session, 'provider_name', None) or 'unknown'
                     t_start = self._last_transcript_ts.get(call_id)
                     
-                    # Build context with conversation history
-                    # System prompt only in first turn (when history is empty)
+                    # Build context with conversation history.
+                    # System-One is advisory metadata only; existing LLM and tool policies remain authoritative.
                     context_for_llm = {"prior_messages": list(conversation_history)}
+                    llm_transcript, system_one_decision = await self.system_one.prepare_turn(
+                        transcript_text,
+                        call_id=call_id,
+                        pipeline=pipeline_label,
+                        provider=provider_label,
+                        caller_number=getattr(session, "caller_number", None),
+                    )
+                    if system_one_decision is not None:
+                        context_for_llm["system_one"] = system_one_decision
                     
                     try:
                         llm_result = await pipeline.llm_adapter.generate(
                             call_id,
-                            transcript_text,
-                            context_for_llm,  # Include conversation history
+                            llm_transcript,
+                            context_for_llm,  # Includes original history plus optional advisory evidence
                             llm_options,  # Use context-injected options (includes system_prompt)
                         )
                     except Exception:
